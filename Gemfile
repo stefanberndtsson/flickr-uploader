@@ -4,3 +4,4 @@ gem "flickraw",'~> 0.9.8'
 gem "unicode"
 gem "levenshtein-ffi", require: 'levenshtein'
 gem "spreadsheet"
+

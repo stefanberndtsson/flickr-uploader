@@ -1,9 +1,8 @@
 require 'bundler'
 require 'spreadsheet'
+require 'optparse'
 require_relative 'flickr'
 require 'pp'
-
-$debug = true
 
 class InvalidPhoto
   attr_reader :error
@@ -44,10 +43,19 @@ class Photo
 end
 
 class Uploader
-  def initialize(token_file:, directory:)
+  def initialize(token_file:, directory:, options: {})
+    @options = options
     prepare_metadata("#{directory}/names.xls")
     check_photos(directory)
     if !valid?
+      exit
+    end
+    
+    # If checking, exit here
+    if @options[:check]
+      if valid?
+        puts "All OK"
+      end
       exit
     end
     setup_flickr(token_file)
@@ -72,22 +80,22 @@ class Uploader
       upload_photo(photo)
     end
     @albums_to_reorder.uniq.each do |album_title| 
-      pp ["REORDER_ALBUM", album_title] if $debug
-      @albums[album_title].reorder
+      pp ["REORDER_ALBUM", album_title] if @options[:debug]
+      @albums[album_title].reorder unless @options[:dry_run]
     end
   end
 
   def upload_photo(photo)
-    pp ["UPLOAD", photo.filename, photo.title] if $debug
-    photo_id = @flickr.upload_photo(photo.filename, photo.title, photo.description, photo.tags)
-    pp ["UPLOADED_AS", photo_id] if $debug
+    pp ["UPLOAD", photo.filename, photo.title] if @options[:debug]
+    photo_id = @flickr.upload_photo(photo.filename, photo.title, photo.description, photo.tags) unless @options[:dry_run]
+    pp ["UPLOADED_AS", photo_id] if @options[:debug]
     album = @albums[photo.title]
     if album
-      pp ["ADD_TO_ALBUM", album.title, photo_id] if $debug
-      album.add_photo(photo_id)
+      pp ["ADD_TO_ALBUM", album.title, photo_id] if @options[:debug]
+      album.add_photo(photo_id) unless @options[:dry_run]
     else
-      pp ["CREATE_ALBUM", photo.title] if $debug
-      create_album(photo.title, "Scientific name: #{photo.latin}\n", photo_id)
+      pp ["CREATE_ALBUM", photo.title] if @options[:debug]
+      create_album(photo.title, "Scientific name: #{photo.latin}\n", photo_id) unless @options[:dry_run]
       album = @albums[photo.title]
     end
     @albums_to_reorder << photo.title
@@ -202,5 +210,32 @@ class Uploader
 end
 
 if __FILE__ == $0
-  Uploader.new(token_file: "oauthtokens-sbfltest.yml", directory: "data")
+  options = {}
+  usage = nil
+  OptionParser.new do |opts| 
+    opts.banner = "Usage: #{$0} [options] upload-directory\n\n"
+    opts.on("-h", "--help", "Show options") do |h| 
+      puts opts if h
+      exit
+    end
+    opts.on("-n", "--dry-run", "Do not actually upload (not an accurate simulation)") do |n| 
+      options[:dry_run] = n
+    end
+    opts.on("-c", "--check", "Check if all files are valid") do |c| 
+      options[:check] = c
+    end
+    opts.on("-D", "--debug", "Debug output") do |d| 
+      options[:debug] = d
+    end
+    usage = opts
+  end.parse!
+
+  upload_dir = ARGV[0]
+
+  if !upload_dir || upload_dir.empty? || !Dir.exists?(upload_dir)
+    puts usage
+    exit
+  end
+
+  Uploader.new(token_file: "oauthtokens-sbfltest.yml", directory: upload_dir, options: options)
 end
