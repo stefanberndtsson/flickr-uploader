@@ -119,6 +119,11 @@ class Uploader
     Dir.chdir(pwd)
     @photos = files.map do |filename|
       birdcode,tagcode,_file = filename.split("/")
+      if @options[:tags_root]
+        tmp = tagcode
+        tagcode = birdcode
+        birdcode = tmp
+      end
       bird = @birds[birdcode]
       tags = @tags[tagcode]
       photo = nil
@@ -220,6 +225,9 @@ if __FILE__ == $0
     end
     opts.on("-n", "--dry-run", "Do not actually upload (not an accurate simulation)") do |n| 
       options[:dry_run] = n
+    end
+    opts.on("-t", "--tags-root", "Root directory has tag codes instead of bird codes") do |t| 
+      options[:tags_root] = t
     end
     opts.on("-c", "--check", "Check if all files are valid") do |c| 
       options[:check] = c
