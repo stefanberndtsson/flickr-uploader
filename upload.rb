@@ -219,9 +219,8 @@ if __FILE__ == $0
   usage = nil
   OptionParser.new do |opts| 
     opts.banner = "Usage: #{$0} [options] upload-directory\n\n"
-    opts.on("-h", "--help", "Show options") do |h| 
-      puts opts if h
-      exit
+    opts.on("-a", "--auth-tokens FILE", "OAuth Token file in YAML format") do |a| 
+      options[:auth_tokens] = a
     end
     opts.on("-n", "--dry-run", "Do not actually upload (not an accurate simulation)") do |n| 
       options[:dry_run] = n
@@ -235,6 +234,10 @@ if __FILE__ == $0
     opts.on("-D", "--debug", "Debug output") do |d| 
       options[:debug] = d
     end
+    opts.on("-h", "--help", "Show options") do |h| 
+      puts opts if h
+      exit
+    end
     usage = opts
   end.parse!
 
@@ -245,5 +248,13 @@ if __FILE__ == $0
     exit
   end
 
-  Uploader.new(token_file: "oauthtokens-sbfltest.yml", directory: upload_dir, options: options)
+  options[:auth_tokens] = "auth_tokens.yml" if !options[:auth_tokens]
+  if !File.exists?(options[:auth_tokens])
+    puts "Unable to find OAuth Token file #{options[:auth_tokens]}"
+    puts "\n"
+    puts usage
+    exit
+  end
+
+  Uploader.new(token_file: options[:auth_tokens], directory: upload_dir, options: options)
 end

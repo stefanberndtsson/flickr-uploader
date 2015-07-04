@@ -1,0 +1,5 @@
+---
+:key: YOUR-API-KEY
+:shared_secret: API-KEY-SECRET
+:token: APP-TOKEN
+:secret: APP-TOKEN-SECRET
