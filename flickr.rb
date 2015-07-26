@@ -198,8 +198,17 @@ class Flickr
       @flickr.photos.getAllContexts(photo_id: @id).set.map {|x| Photoset.new(@flickr, x)}
     end
 
-    def upload(filename)
-      @flickr.upload_photo(filename, title: @title, description: @description, tags: @tags)
+    def upload(filename, retry_count = 10)
+      if retry_count == 0
+        STDERR.puts "Unable to upload photo #{filename}, tried 10 times..."
+        return
+      end
+      begin
+        @flickr.upload_photo(filename, title: @title, description: @description, tags: @tags)
+      rescue EOFError
+        STDERR.puts "Upload failed, retrying... (#{retry_count})"
+        upload(filename, retry_count - 1)
+      end
     end
   end
 end

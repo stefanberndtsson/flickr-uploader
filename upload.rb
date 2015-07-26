@@ -81,6 +81,10 @@ class Uploader
     end
     @albums_to_reorder.uniq.each do |album_title| 
       pp ["REORDER_ALBUM", album_title] if @options[:debug]
+      if @albums[album_title].nil?
+        STDERR.puts "REORDER-ERROR! Album #{album_title.inspect} not found."
+        next
+      end
       @albums[album_title].reorder unless @options[:dry_run]
     end
   end
@@ -169,6 +173,7 @@ class Uploader
     @birds = {}
     birds.each do |row| 
       code,swedish,english,latin = row
+      break if code == "-"
       if !code || code.empty?
         if swedish || english || latin
           puts "Missing code for {#{swedish}, #{english}, #{latin}}"
@@ -199,6 +204,7 @@ class Uploader
     tags.each(1) do |row| 
       code,*taglist = row
       taglist = taglist.compact
+      break if code == "-"
       if !code || code.empty?
         if !taglist.empty?
           puts "Missing code for #{taglist.inspect}"

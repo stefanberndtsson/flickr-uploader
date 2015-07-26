@@ -1,0 +1,20 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ffi (1.9.10)
+    flickraw (0.9.8)
+    levenshtein-ffi (1.1.0)
+      ffi (~> 1.9)
+    ruby-ole (1.2.11.8)
+    spreadsheet (1.0.4)
+      ruby-ole (>= 1.0)
+    unicode (0.4.4.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  flickraw (~> 0.9.8)
+  levenshtein-ffi
+  spreadsheet
+  unicode
